@@ -56,6 +56,25 @@ let insertionSortReturnSwaps = function(arr) {
     return swaps;
 }
 
+let selectionSortReturnSwaps = function(arr) {
+    let swaps = [];
+    for(let i = 0; i < arr.length - 1; i++) {
+        let minIdx = i;
+        for(let j = i + 1; j < arr.length; j++) {
+            if(arr[j] < arr[minIdx]) {
+                minIdx = j;
+            }
+        }
+        if(i != minIdx) {
+            swaps.push([minIdx, i]);
+            let temp = arr[i];
+            arr[i] = arr[minIdx];
+            arr[minIdx] = temp;
+        }
+    }
+    return swaps;
+}
+
 let fadeOutRecursive = function(element) {
     if(Number(element.style.opacity) <= 0) {
         element.style.opacity = 0;
@@ -85,7 +104,7 @@ let animate = function(swaps, arr) {
     showBars(arr, true, [i, j]);
     setTimeout(function() {
         animate(swaps, arr);
-    }, 10);
+    }, 60);
 }
  
 let visualize = function() {
@@ -96,6 +115,8 @@ let visualize = function() {
     let swaps;
     if(algorithm === "1") {
         swaps = bubbleSortReturnSwaps(copy);
+    } else if(algorithm === "2") {
+        swaps = selectionSortReturnSwaps(copy);
     } else {
         swaps = insertionSortReturnSwaps(copy);
     }
