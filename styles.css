@@ -54,6 +54,7 @@ body{
     align-items: flex-end;
     justify-content: space-evenly;
     margin-top: 10%;
+    overflow: hidden;
 }
 
 .buttons > .select-algo {

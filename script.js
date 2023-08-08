@@ -75,6 +75,71 @@ let selectionSortReturnSwaps = function(arr) {
     return swaps;
 }
 
+let sleepAndAnimate = function(arr, swaps) {
+    return new Promise(function(resolve, reject) {
+        setTimeout(function() {
+            showBars(arr, true, swaps);
+            return resolve();
+        }, 30);
+    })
+}
+
+let swapByIdx = function(arr, i , j) {
+    let temp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = temp;
+}
+ 
+let mergeTwoSortedList = async function(arr, start, mid, end) {
+
+    let left = start;
+    let right = mid + 1;
+    let temp = [];
+    let oarr = [...arr];
+    while(left <= mid && right <= end) {
+        if(arr[left] < arr[right]) {
+            temp.push(arr[left]);
+            left += 1;
+        } else {
+            temp.push(arr[right]);
+            right += 1;
+        }
+    }
+
+    while(left <= mid) {
+        temp.push(arr[left]);
+        left += 1;
+    }
+
+    while(right <= end) {
+        temp.push(arr[right]);
+        right += 1;
+    }
+    for(let i = start; i <= end; i++) {
+        arr[i] = temp[i - start];
+        await sleepAndAnimate(arr, [i, i]);
+    }
+}
+
+
+let mergeSort = async function(arr, start, end) {
+    if(start >= end) {
+        return;
+    }
+    let mid = parseInt((start + end) / 2);
+    await mergeSort(arr, start, mid);
+    await mergeSort(arr, mid + 1, end);
+    await mergeTwoSortedList(arr, start, mid, end);
+}
+
+let mergeSortReturnSwaps = async function(arr) {
+    let swaps = [];
+    await mergeSort(arr, 0, arr.length - 1);
+    console.log(arr);
+    showBars(arr, true);
+    return swaps;
+}
+
 let fadeOutRecursive = function(element) {
     if(Number(element.style.opacity) <= 0) {
         element.style.opacity = 0;
@@ -104,29 +169,38 @@ let animate = function(swaps, arr) {
     showBars(arr, true, [i, j]);
     setTimeout(function() {
         animate(swaps, arr);
-    }, 60);
+    }, 30);
 }
  
-let visualize = function() {
+let visualize = async function() {
     let algorithm = document.getElementById("algo").value;
     let divs = document.getElementsByClassName("bar");
     let arr = getArrayToVisualize(divs);
+    let ALGORITHM_VIS_SWAPS = ["1", "2", "3"];
     let copy = [...arr];
-    let swaps;
+    let swaps = [];
     if(algorithm === "1") {
         swaps = bubbleSortReturnSwaps(copy);
     } else if(algorithm === "2") {
         swaps = selectionSortReturnSwaps(copy);
-    } else {
+    } else if(algorithm === "3") {
         swaps = insertionSortReturnSwaps(copy);
+    } else {
+        let testSortedCopy = [...copy];
+        swaps = insertionSortReturnSwaps(testSortedCopy);
+        if(swaps.length === 0) {
+            fadeOut(document.getElementById("box-main"), "Array is already sorted.");
+            return;
+        }
+        await mergeSortReturnSwaps(copy);
     }
-    if(swaps.length === 0) {
+    if(ALGORITHM_VIS_SWAPS.includes(algorithm) && swaps.length === 0) {
+        console.log("Inside swaps");
         fadeOut(document.getElementById("box-main"), "Array is already sorted.");
         return;
+        animate(swaps, arr);
+        document.getElementById("box-main").style.visibility = "initial";
     }
-    animate(swaps, arr);
-    document.getElementById("box-main").style.visibility = "initial";
-    
 }
 
 let showBars = function(arr, clearContainer = false, swappedPair = []) {
