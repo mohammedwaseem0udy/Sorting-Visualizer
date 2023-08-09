@@ -10,7 +10,7 @@ let init = function() {
     let arr = [];
     let N = 30;
     for(let i = 0; i < N; i++) {
-        arr.push(getRandomNumber(10, 375));
+        arr.push(getRandomNumber(50, 375));
     }
     showBars(arr);
 }
@@ -158,21 +158,32 @@ let fadeOut = function(element, text = "Hello") {
     fadeOutRecursive(element);
 }
 
-let animate = function(swaps, arr) {
+let animate = function(swaps, arr, cb) {
     if(swaps.length === 0) {
         showBars(arr, true);
         fadeOut(document.getElementById("box-main"), "Sorting Completed");
+        cb(false);
         return;
     }
+    cb(true);
     let [i, j] = swaps.shift();
     [arr[i], arr[j]] = [arr[j], arr[i]];
     showBars(arr, true, [i, j]);
     setTimeout(function() {
-        animate(swaps, arr);
+        animate(swaps, arr, cb);
     }, 30);
+}
+
+let enableDisableButtons = function(isDisabled = true) {
+    console.log(isDisabled);
+    console.log(document.getElementById("add-bars"));
+    document.getElementById("add-bars").disabled = isDisabled;
+    document.getElementById("visualize").disabled = isDisabled;
+    document.getElementById("algo").disabled = isDisabled;
 }
  
 let visualize = async function() {
+    enableDisableButtons(true);
     let algorithm = document.getElementById("algo").value;
     let divs = document.getElementsByClassName("bar");
     let arr = getArrayToVisualize(divs);
@@ -193,12 +204,14 @@ let visualize = async function() {
             return;
         }
         await mergeSortReturnSwaps(copy);
+        enableDisableButtons(false);
     }
-    if(ALGORITHM_VIS_SWAPS.includes(algorithm) && swaps.length === 0) {
-        console.log("Inside swaps");
-        fadeOut(document.getElementById("box-main"), "Array is already sorted.");
-        return;
-        animate(swaps, arr);
+    if(ALGORITHM_VIS_SWAPS.includes(algorithm)) {
+        if(swaps.length === 0) {
+            fadeOut(document.getElementById("box-main"), "Array is already sorted.");
+            return;
+        }
+        animate(swaps, arr, enableDisableButtons);
         document.getElementById("box-main").style.visibility = "initial";
     }
 }
