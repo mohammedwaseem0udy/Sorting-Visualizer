@@ -75,12 +75,12 @@ let selectionSortReturnSwaps = function(arr) {
     return swaps;
 }
 
-let sleepAndAnimate = function(arr, swaps) {
+let sleepAndAnimate = function(arr, swaps, color = "#F31559", timeout = 60) {
     return new Promise(function(resolve, reject) {
         setTimeout(function() {
-            showBars(arr, true, swaps);
+            showBars(arr, true, swaps, color);
             return resolve();
-        }, 30);
+        }, timeout);
     })
 }
 
@@ -95,7 +95,6 @@ let mergeTwoSortedList = async function(arr, start, mid, end) {
     let left = start;
     let right = mid + 1;
     let temp = [];
-    let oarr = [...arr];
     while(left <= mid && right <= end) {
         if(arr[left] < arr[right]) {
             temp.push(arr[left]);
@@ -132,11 +131,45 @@ let mergeSort = async function(arr, start, end) {
     await mergeTwoSortedList(arr, start, mid, end);
 }
 
-let mergeSortReturnSwaps = async function(arr) {
-    let swaps = [];
+let mergeSortVisualize = async function(arr) {
     await mergeSort(arr, 0, arr.length - 1);
-    console.log(arr);
     showBars(arr, true);
+}
+
+let partition = function(arr, lo, hi, pivot, swaps) {
+    let i = lo, j = lo;
+
+    while(i <= hi) {
+        if(arr[i] > pivot) {
+            i += 1;
+        } else {
+            swaps.push([i, j]);
+            let temp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = temp;
+            i += 1;
+            j += 1;
+        }
+    }
+
+    return j - 1;
+}
+
+let quickSort = function(arr, lo, hi, swaps) {
+    if(lo >= hi) {
+        return;
+    }
+
+    let pivot = arr[hi];
+    let pivotIndex = partition(arr, lo, hi, pivot, swaps);
+    quickSort(arr, lo, pivotIndex - 1, swaps);
+    quickSort(arr, pivotIndex + 1, hi, swaps);
+}
+
+let quickSortReturnSwaps = function(arr) {
+    let swaps = [];
+    quickSort(arr, 0, arr.length - 1, swaps);
+    console.log(arr);
     return swaps;
 }
 
@@ -158,7 +191,15 @@ let fadeOut = function(element, text = "Hello") {
     fadeOutRecursive(element);
 }
 
-let animate = function(swaps, arr, cb) {
+let sleep = async function(swaps, arr, cb) {
+    return new Promise(function(resolve, reject) {
+        setTimeout(function() {
+            animate(swaps, arr, cb);
+        }, 10);
+    })
+} 
+
+let animate = async function(swaps, arr, cb) {
     if(swaps.length === 0) {
         showBars(arr, true);
         fadeOut(document.getElementById("box-main"), "Sorting Completed");
@@ -167,16 +208,15 @@ let animate = function(swaps, arr, cb) {
     }
     cb(true);
     let [i, j] = swaps.shift();
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-    showBars(arr, true, [i, j]);
-    setTimeout(function() {
-        animate(swaps, arr, cb);
-    }, 30);
+    if(i !== j) {
+        await sleepAndAnimate(arr, [i, j], "#252B48", 10);
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+        await sleepAndAnimate(arr, [i, j], "#F31559", 10);
+    }
+    await sleep(swaps, arr, cb);
 }
 
 let enableDisableButtons = function(isDisabled = true) {
-    console.log(isDisabled);
-    console.log(document.getElementById("add-bars"));
     document.getElementById("add-bars").disabled = isDisabled;
     document.getElementById("visualize").disabled = isDisabled;
     document.getElementById("algo").disabled = isDisabled;
@@ -187,7 +227,7 @@ let visualize = async function() {
     let algorithm = document.getElementById("algo").value;
     let divs = document.getElementsByClassName("bar");
     let arr = getArrayToVisualize(divs);
-    let ALGORITHM_VIS_SWAPS = ["1", "2", "3"];
+    let ALGORITHM_VIS_SWAPS = ["1", "2", "3", "5"];
     let copy = [...arr];
     let swaps = [];
     if(algorithm === "1") {
@@ -196,15 +236,17 @@ let visualize = async function() {
         swaps = selectionSortReturnSwaps(copy);
     } else if(algorithm === "3") {
         swaps = insertionSortReturnSwaps(copy);
-    } else {
+    } else if(algorithm === "4") {
         let testSortedCopy = [...copy];
         swaps = insertionSortReturnSwaps(testSortedCopy);
         if(swaps.length === 0) {
             fadeOut(document.getElementById("box-main"), "Array is already sorted.");
             return;
         }
-        await mergeSortReturnSwaps(copy);
+        await mergeSortVisualize(copy);
         enableDisableButtons(false);
+    } else {
+        swaps = quickSortReturnSwaps(copy);
     }
     if(ALGORITHM_VIS_SWAPS.includes(algorithm)) {
         if(swaps.length === 0) {
@@ -216,7 +258,7 @@ let visualize = async function() {
     }
 }
 
-let showBars = function(arr, clearContainer = false, swappedPair = []) {
+let showBars = function(arr, clearContainer = false, swappedPair = [], color = "#F31559") {
 
     let container = document.getElementById("container");
     if(clearContainer) {
@@ -229,7 +271,8 @@ let showBars = function(arr, clearContainer = false, swappedPair = []) {
         divTag.setAttribute("numVal", arr[i]);
 
         if(swappedPair && swappedPair.length > 0 && swappedPair.includes(i)) {
-            divTag.style.backgroundColor = "#F31559";
+            divTag.style.backgroundColor = color;
+            divTag.style.color = "#D8D9DA"
         }
         container.appendChild(divTag);
     }
